@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:meals_app/data/dummy_data.dart';
-import 'package:meals_app/models/meal.dart';
+import 'package:meals_app/Provider/favourite_provider.dart';
+import 'package:meals_app/Provider/meals_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meals_app/Provider/filter_provider.dart';
+
 import 'package:meals_app/screens/categories.dart';
 import 'package:meals_app/screens/filters.dart';
 import 'package:meals_app/screens/meals.dart';
@@ -13,18 +16,18 @@ const kintialFilters = {
   Filter.vegan: false,
 };
 
-class TabsScreen extends StatefulWidget {
+class TabsScreen extends ConsumerStatefulWidget {
   const TabsScreen({super.key});
 
-  State<TabsScreen> createState() {
+  ConsumerState<TabsScreen> createState() {
     return _TabsScreenState();
   }
 }
 
-class _TabsScreenState extends State<TabsScreen> {
+class _TabsScreenState extends ConsumerState<TabsScreen> {
   int _selectedindex = 0;
   String activeScreenTitle = 'Categories';
-  final List<Meal> _favoriteMeal = [];
+  
 
   Map<Filter, bool> _Selectedfilters = kintialFilters;
 
@@ -37,17 +40,7 @@ class _TabsScreenState extends State<TabsScreen> {
     );
   }
 
-  void _toggleMealStatus(Meal meal) {
-    _favoriteMeal.contains(meal)
-        ? setState(() {
-            _favoriteMeal.remove(meal);
-            _showinfo('Meal removed');
-          })
-        : setState(() {
-            _favoriteMeal.add(meal);
-            _showinfo('Meal added');
-          });
-  }
+ 
 
   void _selectPage(index) {
     setState(() {
@@ -57,39 +50,29 @@ class _TabsScreenState extends State<TabsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final availableMeals = dummyMeals.where((meal) {
-      if (_Selectedfilters[Filter.glutenFree]! && !meal.isGlutenFree) {
-        return false;
-      }
-      if (_Selectedfilters[Filter.lactoseFree]! && !meal.isLactoseFree) {
-        return false;
-      }
-      if (_Selectedfilters[Filter.vegetarian]! && !meal.isVegetarian) {
-        return false;
-      }
-      if (_Selectedfilters[Filter.vegan]! && !meal.isVegan) {
-        return false;
-      }
-      return true;
-    }).toList();
-    Widget activeScreen = CategoriesScreen(onToggle: _toggleMealStatus,availableMeals: availableMeals,);
+   
+   final availableMeals = ref.watch(filteredMealsProvider); 
+    Widget activeScreen = CategoriesScreen(
+      availableMeals: availableMeals,
+    );
     if (_selectedindex == 1) {
+final favouriteMeals = ref.watch(FavouriteMealProvider);
       activeScreen =
-          MealsScreen(onToggle: _toggleMealStatus, meals: _favoriteMeal);
+          MealsScreen( meals: favouriteMeals);
       activeScreenTitle = 'Favourites';
     }
     void _selecteddrawer(String identifer) async {
       Navigator.of(context).pop();
       if (identifer == 'filters') {
         //we could use pushReplacment instead of push to replace the current screen instead of pushing another one on top
-        final result = await Navigator.of(context).push<Map<Filter, bool>>(
+        await Navigator.of(context).push<Map<Filter, bool>>(
           MaterialPageRoute(
-            builder: (context) =>  FiltersScreen(currentFilter: _Selectedfilters,),
+            builder: (context) => const FiltersScreen(
+              
+            ),
           ),
         );
-        setState(() {
-          _Selectedfilters = result ?? kintialFilters;
-        });
+  
       }
     }
 
