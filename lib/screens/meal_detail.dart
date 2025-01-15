@@ -10,7 +10,7 @@ class MealDetailScreen extends ConsumerWidget {
   final Meal meal;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-   final isfav= ref.watch(FavouriteMealProvider).contains(meal);
+    final isfav = ref.watch(FavouriteMealProvider).contains(meal);
     return Scaffold(
       appBar: AppBar(
         title: Text(meal.title),
@@ -29,18 +29,33 @@ class MealDetailScreen extends ConsumerWidget {
                 ),
               );
             },
-            icon: Icon(isfav?Icons.star:Icons.star_border),
-          )
+            icon: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Icon(
+                isfav ? Icons.star : Icons.star_border,
+                key: ValueKey(isfav),
+              ),
+              transitionBuilder: (child, animation) {
+                return RotationTransition(
+                  turns: Tween(begin: 0.8, end: 1.0).animate(animation),
+                  child: child,
+                );
+              },
+            ),  
+          ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Image.network(
-              meal.imageUrl,
-              height: 300,
-              width: double.infinity,
-              fit: BoxFit.cover,
+            Hero(
+              tag: meal.id,
+              child: Image.network(
+                meal.imageUrl,
+                height: 300,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(
               height: 20,
